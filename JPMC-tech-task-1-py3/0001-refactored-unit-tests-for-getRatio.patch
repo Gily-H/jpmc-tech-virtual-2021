@@ -1,0 +1,121 @@
+From 0f554c04a080bb0a3f319e5e7484dd8802871e45 Mon Sep 17 00:00:00 2001
+From: Gilman <gilman.huang213@gmail.com>
+Date: Wed, 26 May 2021 19:09:01 -0400
+Subject: [PATCH] refactored unit tests for getRatio
+
+---
+ client_test.py | 68 ++++++++++++++++++--------------------------------
+ 1 file changed, 24 insertions(+), 44 deletions(-)
+
+diff --git a/client_test.py b/client_test.py
+index e037888..df839a6 100644
+--- a/client_test.py
++++ b/client_test.py
+@@ -41,7 +41,7 @@ class ClientTest(unittest.TestCase):
+     """Assertion"""
+     for quote in quotes:
+       stock, bid_price, ask_price, price = getDataPoint(quote)
+-      self.assertTrue(bid_price > 0)
++      self.assertGreater(bid_price, 0)
+ 
+   def test_getDataPoint_AskNotNegative(self):
+     quotes = [
+@@ -51,7 +51,7 @@ class ClientTest(unittest.TestCase):
+ 
+     for quote in quotes:
+       stock, bid_price, ask_price, price = getDataPoint(quote)
+-      self.assertTrue(ask_price > 0)
++      self.assertGreater(ask_price, 0)
+ 
+   def test_getDataPoint_calculatePriceNotNegative(self):
+     quotes = [
+@@ -61,64 +61,44 @@ class ClientTest(unittest.TestCase):
+ 
+     for quote in quotes:
+       stock, bid_price, ask_price, price = getDataPoint(quote)
+-      self.assertTrue((price > 0))
++      self.assertGreater((price, 0))
+       
+   """getRatio tests"""
+-  def test_getRatio_calculateRatio(self):
+-    quotes = [
+-      {'top_ask': {'price': 121.2, 'size': 36}, 'timestamp': '2019-02-11 22:06:30.572453', 'top_bid': {'price': 120.48, 'size': 109}, 'id': '0.109974697771', 'stock': 'ABC'},
+-      {'top_ask': {'price': 121.68, 'size': 4}, 'timestamp': '2019-02-11 22:06:30.572453', 'top_bid': {'price': 117.87, 'size': 81}, 'id': '0.109974697771', 'stock': 'DEF'}
+-    ]
++  def test_getRatio_calculateRatioGreaterThanOne(self):
++    price_a = 279.44
++    price_b = 182.04
+ 
+-    price_a = (quotes[0]['top_ask']['price'] + quotes[0]['top_bid']['price']) / 2
+-    price_b = (quotes[1]['top_ask']['price'] + quotes[1]['top_bid']['price']) / 2
++    self.assertGreater(getRatio(price_a, price_b), 1)
+ 
+-    """Assertion"""
+-    self.assertEqual(getRatio(price_a, price_b), price_a / price_b)
++  def test_getRatio_calculateRatioLessThanOne(self):
++    price_a = 92.99
++    price_b = 126.63
+ 
+-  def test_getRatio_calculateRatioDenominatorGreaterThanNumerator(self):
+-    quotes = [
+-      {'top_ask': {'price': 121.2, 'size': 36}, 'timestamp': '2019-02-11 22:06:30.572453', 'top_bid': {'price': 120.48, 'size': 109}, 'id': '0.109974697771', 'stock': 'ABC'},
+-      {'top_ask': {'price': 123.68, 'size': 4}, 'timestamp': '2019-02-11 22:06:30.572453', 'top_bid': {'price': 120.87, 'size': 81}, 'id': '0.109974697771', 'stock': 'DEF'}
+-    ]
++    self.assertLess(getRatio(price_a, price_b), 1)
+ 
+-    price_a = (quotes[0]['top_ask']['price'] + quotes[0]['top_bid']['price']) / 2
+-    price_b = (quotes[1]['top_ask']['price'] + quotes[1]['top_bid']['price']) / 2
++  def test_getRatio_calculateRatioExactlyOne(self):
++    price_a = 442.34
++    price_b = 442.34
+ 
+-    """Assertion"""
+-    self.assertEqual(getRatio(price_a, price_b), price_a / price_b)
++    self.assertEqual(getRatio(price_a, price_b), 1)
+ 
+   def test_getRatio_divideByZeroReturnNone(self):
+-    quotes = [
+-      {'top_ask': {'price': 121.2, 'size': 36}, 'timestamp': '2019-02-11 22:06:30.572453', 'top_bid': {'price': 120.48, 'size': 109}, 'id': '0.109974697771', 'stock': 'ABC'},
+-      {'top_ask': {'price': 121.68, 'size': 4}, 'timestamp': '2019-02-11 22:06:30.572453', 'top_bid': {'price': 117.87, 'size': 81}, 'id': '0.109974697771', 'stock': 'DEF'}
+-    ]
++    price_a = 89.74
++    price_b = 0
+ 
+-    for quote in quotes:
+-      numerator = (quote['top_ask']['price'] + quote['top_bid']['price']) / 2
+-      self.assertIsNone(getRatio(numerator, 0))
++    self.assertIsNone(getRatio(price_a, price_b))
+ 
+   def test_getRatio_zeroDividedByPriceReturnZero(self):
+-    quotes = [
+-      {'top_ask': {'price': 121.2, 'size': 36}, 'timestamp': '2019-02-11 22:06:30.572453', 'top_bid': {'price': 120.48, 'size': 109}, 'id': '0.109974697771', 'stock': 'ABC'},
+-      {'top_ask': {'price': 121.68, 'size': 4}, 'timestamp': '2019-02-11 22:06:30.572453', 'top_bid': {'price': 117.87, 'size': 81}, 'id': '0.109974697771', 'stock': 'DEF'}
+-    ]
++    price_a = 0
++    price_b = 253.63  
+ 
+-    for quote in quotes:
+-      denominator = (quote['top_ask']['price'] + quote['top_bid']['price']) / 2
+-      self.assertEqual(getRatio(0, denominator), 0)
++    self.assertEqual(getRatio(price_a, price_b), 0)
+ 
+   def test_getRatio_ratioNotNegative(self):
+-    quotes = [
+-      {'top_ask': {'price': 121.2, 'size': 36}, 'timestamp': '2019-02-11 22:06:30.572453', 'top_bid': {'price': 120.48, 'size': 109}, 'id': '0.109974697771', 'stock': 'ABC'},
+-      {'top_ask': {'price': 121.68, 'size': 4}, 'timestamp': '2019-02-11 22:06:30.572453', 'top_bid': {'price': 117.87, 'size': 81}, 'id': '0.109974697771', 'stock': 'DEF'}
+-    ]
+-
+-    price_a = (quotes[0]['top_ask']['price'] + quotes[0]['top_bid']['price']) / 2
+-    price_b = (quotes[1]['top_ask']['price'] + quotes[1]['top_bid']['price']) / 2
++    price_a = 123.43
++    price_b = 111.83
+ 
+-    """Assertion"""
+-    self.assertTrue(getRatio(price_a, price_b) > 0)
++    self.assertGreater(getRatio(price_a, price_b), 0)
+ 
+ 
+ if __name__ == '__main__':
+-- 
+2.29.1.windows.1
+
